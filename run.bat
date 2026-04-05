@@ -27,4 +27,4 @@ echo  GUI  ^>  http://localhost:8082
 echo.
 
 docker rm -f wfrunner >nul 2>&1
-docker run --rm --name wfrunner --privileged --cgroupns=host -p 8082:8082 ghcr.io/fairflow-bioinformaticsframework/wfrunner:latest
+docker run --rm --name wfrunner --privileged --cgroupns=host -p 8082:8082 ghcr.io/Fairflow-BioinformaticsFramework/streamflow_NextFlow_formed:latest
