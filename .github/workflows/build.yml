@@ -27,12 +27,17 @@ jobs:
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push Docker
+      - name: Build and push on main
+        if: github.event_name == 'push'
         run: make build
 
-      - name: Tag latest on release
+      - name: Build and push release tags
         if: github.event_name == 'release'
         run: |
-          docker buildx imagetools create \
+          docker buildx build \
+            --platform linux/amd64 \
+            --build-arg GIT_REVISION=${{ github.event.release.tag_name }} \
+            -t ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:${{ github.event.release.tag_name }} \
             -t ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:latest \
-            ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:${{ github.event.release.tag_name }}
+            --push \
+            .
