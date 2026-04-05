@@ -3,7 +3,7 @@ title WFRunner
 
 echo.
 echo  ====================================
-echo   WFRunner — Nextflow / Streamflow
+echo   WFRunner - Nextflow / Streamflow
 echo  ====================================
 echo.
 
