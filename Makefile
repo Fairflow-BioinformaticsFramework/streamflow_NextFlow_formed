@@ -1,5 +1,6 @@
-name = ghcr.io/fairflow-bioinformaticsframework/wfrunner
+name = ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed
 build-arg := $(shell git describe --exact-match --tags 2> /dev/null || git rev-parse --short HEAD)
+
 build:
 	docker buildx build \
 		--platform linux/amd64 \
