@@ -1,17 +1,22 @@
 name: Build
+
 on:
   push:
     branches: [main]
   release:
     types: [published]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -30,4 +35,4 @@ jobs:
         run: |
           docker buildx imagetools create \
             -t ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:latest \
-            ghcr.io/ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:$(git describe --tags)
+            ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:${{ github.event.release.tag_name }}
