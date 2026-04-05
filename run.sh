@@ -3,7 +3,7 @@ set -e
 
 echo ""
 echo " ===================================="
-echo "  WFRunner — Nextflow / Streamflow"
+echo "  WFRunner - Nextflow / Streamflow"
 echo " ===================================="
 echo ""
 
