@@ -1,0 +1,36 @@
+version: v1.0
+
+# Sezione workflows: definisce il workflow da eseguire.
+# Il nome (topx-workflow) è arbitrario ma deve essere univoco nel file.
+workflows:
+  topx-workflow:
+
+    # type: il tipo di workflow. Usare "cwl" per workflow scritti in CWL.
+    type: cwl
+
+    config:
+      # file: percorso relativo al file CWL che descrive il processo da eseguire.
+      # Deve stare nella stessa cartella di questo file.
+      file: topx.cwl
+
+      # settings: percorso relativo al file con i valori dei parametri di input.
+      # Deve stare nella stessa cartella di questo file.
+      settings: topx-params.yml
+
+    # bindings: collega i passi del workflow al deployment (Docker) da usare.
+    # step: "/" indica il processo radice, cioè l'intero workflow.
+    # target.model: deve corrispondere al nome definito nella sezione "models" qui sotto.
+    bindings:
+      - step: /
+        target:
+          model: docker-topx
+
+# models: definisce i deployment disponibili (in questo caso un container Docker).
+models:
+  docker-topx:
+    # type: "docker" indica che si usa Docker come runtime.
+    type: docker
+    config:
+      # image: immagine Docker da utilizzare. Deve essere disponibile su Docker Hub
+      # o su un registry accessibile dalla macchina che esegue Streamflow.
+      image: repbioinfo/topxv2:1

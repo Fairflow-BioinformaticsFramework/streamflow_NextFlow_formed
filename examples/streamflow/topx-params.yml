@@ -1,0 +1,30 @@
+# Questo file contiene i valori concreti dei parametri di input per il workflow.
+# I nomi dei parametri (es. annotated_matrix, format...) devono corrispondere
+# esattamente ai nomi definiti nella sezione "inputs" del file .cwl.
+
+# Parametro di tipo File: il file di dati da analizzare.
+# class: File è obbligatorio per indicare a CWL che si tratta di un file.
+# path: percorso del file. Usare "./" per indicare la stessa cartella di questo file.
+annotated_matrix:
+  class: File
+  path: ./annotated.csv
+
+# Formato del file di input.
+# Valori possibili: csv, tsv
+format: csv
+
+# Separatore usato nel file.
+# Usare "," per CSV, "\t" per TSV.
+separator: ","
+
+# I dati sono in scala logaritmica?
+# Valori possibili: TRUE, FALSE
+logged: "FALSE"
+
+# Soglia per il filtraggio dei geni a bassa espressione.
+# Valore intero, default 10.
+threshold: 10
+
+# Tipo di analisi da eseguire.
+# Valori possibili: expression, methylation
+type: expression

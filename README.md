@@ -1,1 +1,211 @@
-# streamflow_NextFlow_formed
+# WFRunner
+
+A lightweight web interface to upload, execute, and download results from **Nextflow** and **Streamflow** bioinformatics workflows. Runs entirely inside a Docker container with Docker-in-Docker support, so workflows can pull and execute their own containers.
+
+---
+
+## Overview
+
+WFRunner exposes a minimal browser UI on port `8082`. You upload a workflow file (`.nf` for Nextflow, `.yml` for Streamflow) and your data files, hit Run, watch the live log, and download a ZIP of the results when done.
+
+Internally it runs **FastAPI** + **Uvicorn** as the web layer, **Nextflow 25.x** and **Streamflow** as execution engines, and **Docker-in-Docker** (DinD) so that workflow steps can pull and run their own containers.
+
+---
+
+## Quick Start — Use Pre-Built Image (Recommended)
+
+No need to build anything. The image is automatically built and published to GitHub Container Registry on every release.
+
+**Windows:**
+```
+run.bat
+```
+
+**Linux / macOS:**
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+Then open your browser at **http://localhost:8082**.
+
+> The script pulls the latest image from `ghcr.io/fairflow-bioinformaticsframework/wfrunner:latest` and starts the container.
+
+---
+
+## Local Build (Developers)
+
+Use this if you modified the source code and want to test before pushing.
+
+**Windows:**
+```
+run-dev.bat
+```
+
+**Linux / macOS:**
+```bash
+chmod +x run-dev.sh
+./run-dev.sh
+```
+
+This builds the image from the local `Dockerfile` using `docker-compose.dev.yml` and runs it.
+
+---
+
+## How to Use the GUI
+
+1. **Workflow File** — drop or click to upload your `.nf` (Nextflow) or `.yml` (Streamflow) file.
+2. **Data Files** — drop or click to upload one or more input data files (e.g. `annotated.csv`). Multiple files supported.
+3. Click **▶ Run Workflow**.
+4. Watch the **Execution Log** tab for live output.
+5. When the job completes, click **↓ Download Results** to get a ZIP of all outputs.
+6. Past runs are visible in the **Job History** tab.
+
+---
+
+## Writing Workflows
+
+### Nextflow (`.nf`)
+
+Each `.nf` file is self-contained. **Do not** include a `docker {}` block — the server automatically generates a `nextflow.config` that enables Docker before running. If you upload your own `nextflow.config` as a data file it will be used instead.
+
+Minimal template:
+
+```groovy
+#!/usr/bin/env nextflow
+nextflow.enable.dsl=2
+
+params.input = 'data.csv'
+
+process myTool {
+    container 'my-docker-image:tag'
+    publishDir 'results', mode: 'copy'
+
+    input:
+    path inputFile
+
+    output:
+    path 'output_*', optional: true
+
+    script:
+    """
+    mkdir -p /data
+    cp ${inputFile} /data/input.csv
+    Rscript /bin/tool.R
+    cp /data/output_* . 2>/dev/null || true
+    """
+}
+
+workflow {
+    ch = Channel.fromPath(params.input)
+    myTool(ch)
+}
+```
+
+**Key rules:**
+- Always `mkdir -p /data` before writing into `/data` — it may not exist in the container.
+- Use `publishDir 'results', mode: 'copy'` to collect outputs.
+- The file referenced in `params.input` must match the name of the data file you upload.
+
+See `examples/nextflow/topx.nf` for a complete working example.
+
+---
+
+### Streamflow (`.yml`)
+
+Streamflow requires **three files** uploaded together as data files:
+
+| File | Purpose |
+|---|---|
+| `workflow.yml` | Main file passed to `streamflow run` — orchestration + Docker binding |
+| `tool.cwl` | CWL tool definition — command, inputs, outputs |
+| `params.yml` | Concrete input values for this run |
+
+Upload the `.yml` as the **Workflow File** and the `.cwl` + `params.yml` + data files as **Data Files**.
+
+Minimal `workflow.yml`:
+```yaml
+version: v1.0
+workflows:
+  my-workflow:
+    type: cwl
+    config:
+      file: tool.cwl
+      settings: params.yml
+    bindings:
+      - step: /
+        target:
+          model: docker-tool
+models:
+  docker-tool:
+    type: docker
+    config:
+      image: my-docker-image:tag
+```
+
+See `examples/streamflow/` for a complete working example using `repbioinfo/topxv2:1`.
+
+---
+
+## Project Structure
+
+```
+wfrunner/
+├── Dockerfile                    # Image definition (DinD + Nextflow + Streamflow + FastAPI)
+├── entrypoint.sh                 # Starts dockerd then uvicorn
+├── Makefile                      # Used by GitHub Actions to build and push
+├── docker-compose.yml            # Production: pulls pre-built image
+├── docker-compose.dev.yml        # Dev: builds locally
+├── run.bat                       # Windows: pull & run pre-built image
+├── run.sh                        # Linux/macOS: pull & run pre-built image
+├── run-dev.bat                   # Windows: build locally & run
+├── run-dev.sh                    # Linux/macOS: build locally & run
+├── app/
+│   ├── main.py                   # FastAPI backend
+│   └── static/
+│       └── index.html            # Web GUI
+├── examples/
+│   ├── annotated.csv             # Sample count matrix (30 genes × 6 samples)
+│   ├── nextflow/
+│   │   ├── topx.nf               # Example Nextflow workflow (topX filter)
+│   │   └── nextflow.config       # Docker config (auto-generated by server if missing)
+│   └── streamflow/
+│       ├── topx.yml              # Streamflow main file
+│       ├── topx.cwl              # CWL tool definition
+│       └── topx-params.yml       # Input parameters
+└── .github/
+    └── workflows/
+        └── build.yml             # GitHub Actions: auto build & push on push/release
+```
+
+---
+
+## CI/CD — Automatic Builds
+
+Every push to `main` triggers a GitHub Actions build that:
+1. Builds the Docker image for `linux/amd64`.
+2. Pushes it to `ghcr.io/fairflow-bioinformaticsframework/wfrunner:<commit-sha>`.
+
+Every **GitHub Release** additionally tags the image as `:latest` and with the release version tag (e.g. `1.0.0`).
+
+To publish a new release:
+1. Go to **GitHub → Releases → Create a new release**.
+2. Set the tag (e.g. `1.0.0`) targeting `main`.
+3. Publish — the workflow runs automatically.
+4. Users running `run.bat` / `run.sh` will get the new image on next launch.
+
+---
+
+## Requirements
+
+- **Docker Desktop** (Windows / macOS) or **Docker Engine** (Linux) must be running.
+- The container must run in **privileged mode** (`--privileged`) for Docker-in-Docker to work. Both run scripts handle this automatically.
+- Internet access is required the first time to pull the WFRunner image and any workflow container images.
+
+---
+
+## Notes
+
+- Jobs and results are stored **in-memory** and inside the container — they are lost when the container stops. Download your results before stopping.
+- Workflow container images are cached inside the running WFRunner container and are also lost on restart. First run of each workflow will be slower due to the pull.
+- The server auto-generates a `nextflow.config` enabling Docker for every `.nf` job. If you upload your own `nextflow.config` as a data file it takes precedence.

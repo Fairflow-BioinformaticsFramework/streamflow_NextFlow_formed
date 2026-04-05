@@ -1,0 +1,4 @@
+services:
+  wfrunner:
+    build: .
+    image: wfrunner

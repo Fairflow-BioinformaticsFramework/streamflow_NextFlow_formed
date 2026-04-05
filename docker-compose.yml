@@ -1,0 +1,3 @@
+services:
+  wfrunner:
+    image: ghcr.io/fairflow-bioinformaticsframework/wfrunner:latest
