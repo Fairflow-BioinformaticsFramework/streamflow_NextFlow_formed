@@ -35,7 +35,7 @@ jobs:
         if: github.event_name == 'release'
         run: |
           docker buildx build \
-            --platform linux/amd64 \
+            --platform linux/amd64,linux/arm64 \
             --build-arg GIT_REVISION=${{ github.event.release.tag_name }} \
             -t ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:${{ github.event.release.tag_name }} \
             -t ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:latest \
