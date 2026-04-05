@@ -29,5 +29,5 @@ jobs:
         if: github.event_name == 'release'
         run: |
           docker buildx imagetools create \
-            -t ghcr.io/fairflow-bioinformaticsframework/wfrunner:latest \
-            ghcr.io/fairflow-bioinformaticsframework/wfrunner:$(git describe --tags)
+            -t ghcr.io/Fairflow-BioinformaticsFramework/streamflow_NextFlow_formed:latest \
+            ghcr.io/Fairflow-BioinformaticsFramework/streamflow_NextFlow_formed:$(git describe --tags)
