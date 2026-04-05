@@ -29,8 +29,7 @@ chmod +x run.sh
 
 Then open your browser at **http://localhost:8082**.
 
-> The script pulls the latest image from `ghcr.io/fairflow-bioinformaticsframework/wfrunner:latest` and starts the container.
-
+The script pulls the latest image from ghcr.io/fairflow-bioinformaticsframework/streamflow_nextflow_formed:latest and starts the container.
 ---
 
 ## Local Build (Developers)
